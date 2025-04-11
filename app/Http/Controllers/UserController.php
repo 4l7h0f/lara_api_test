@@ -3,33 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource with pagination.
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        return User::all();
+        return UserResource::collection(User::paginate(10));
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\Response
      */
     public function store(UserRequest $request)
     {
-        $data = $request->validated();
-        $data['password'] = bcrypt($data['password']);
-        $user = User::create($data);
-        return response()->json($user, 201);
+        $user = User::create($request->validated());
+        return new UserResource($user);
     }
 
     /**
@@ -40,27 +39,22 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        return User::findOrFail($id);
+        return new UserResource(User::findOrFail($id));
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\UserRequest  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function update(UserRequest $request, $id)
     {
         $user = User::findOrFail($id);
-        $data = $request->validated();
+        $user->update($request->validated());
 
-        if (isset($data['password'])) {
-            $data['password'] = bcrypt($data['password']);
-        }
-
-        $user->update($data);
-        return response()->json($user);
+        return new UserResource($user);
     }
 
     /**
@@ -71,7 +65,11 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        User::findOrFail($id)->delete();
-        return response()->json(null, 204);
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully.'
+        ]);
     }
 }
