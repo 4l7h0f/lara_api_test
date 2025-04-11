@@ -114,6 +114,65 @@ Authorization: Bearer {token}
 | PUT    | /api/users/{id}  | Update a user        |
 | DELETE | /api/users/{id}  | Delete a user        |
 
+# 📘 User API — Filtering, Searching, and Sorting
+
+This API provides enhanced filtering capabilities on the `/api/users` endpoint, including search, date filtering, and sorting.
+
+## ✅ Endpoint
+
+```
+GET /api/users
+```
+
+## 🔍 Query Parameters
+
+| Parameter   | Type     | Description |
+|-------------|----------|-------------|
+| `search`    | string   | Search by name or email (partial match) |
+| `from`      | date     | Filter users created from this date (`YYYY-MM-DD`) |
+| `to`        | date     | Filter users created up to this date (`YYYY-MM-DD`) |
+| `sort_by`   | string   | Sort field: `name`, `email`, `created_at` |
+| `sort_dir`  | string   | Sort direction: `asc` or `desc` |
+| `page`      | integer  | Pagination page (default: 1) |
+
+## 📥 Example Requests
+
+```http
+GET /api/users?search=john
+GET /api/users?from=2024-01-01&to=2024-12-31
+GET /api/users?sort_by=name&sort_dir=asc
+GET /api/users?search=jane&from=2024-01-01&to=2024-12-31&sort_by=created_at&sort_dir=desc
+```
+
+## 🔄 Response Format
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com"
+      // ...
+    },
+    ...
+  ],
+  "links": {...},
+  "meta": {...}
+}
+```
+
+## ⚠️ Validation Rules
+
+Handled via `UserFilterRequest`:
+
+- `search`: optional, string
+- `from`: optional, valid date
+- `to`: optional, valid date, must be after or equal to `from`
+- `sort_by`: must be `name`, `email`, or `created_at`
+- `sort_dir`: must be `asc` or `desc`
+
+
 ### 🧠 Search (External Data)
 
 All search queries fetch real-time data from an external JSON file.
@@ -140,6 +199,9 @@ GET /api/search?YMD=20230405
 - Passwords are hashed using Bcrypt
 - Validation handled via a unified `UserRequest`
 - External data source: [https://bit.ly/48ejMhW](https://bit.ly/48ejMhW)
+- Returns `404` with a message if no users match the filters.
+- Default sort is `created_at desc`.
+- Pagination is included by default (`10 items per page`).
 
 ---
 

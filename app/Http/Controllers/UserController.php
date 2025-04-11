@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Filters\UserFilters;
+use App\Http\Requests\UserFilterRequest;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -14,9 +16,20 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(UserFilterRequest $request)
     {
-        return UserResource::collection(User::paginate(10));
+        $filters = new UserFilters($request);
+        $query = $filters->apply(User::query());
+
+        $users = $query->paginate(10)->appends($request->validated());
+
+        if ($users->isEmpty()) {
+            return response()->json([
+                'message' => 'No users found with the provided filters.'
+            ], 404);
+        }
+
+        return UserResource::collection($users);
     }
 
     /**
